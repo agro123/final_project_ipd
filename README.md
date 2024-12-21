@@ -21,4 +21,3 @@ de la nube como AWS.
    Crear contenedor:
    ```bash
     docker run -it --name movies_revenue_mlflow --rm -p 5000:5000 -v "$(pwd)/data":/app/data -v "$(pwd)/model/mlruns":/app/mlruns -v "$(pwd)/model/service.py":/app/service.py -v "$(pwd)/model/model.py":/app/model.py movie_mlflow```
-# final_project_ipd

@@ -1,0 +1,24 @@
+model/.trash/*
+model/.ipynb_checkpoints
+pip/*
+
+**/.cache
+**/.config
+**/.ipython
+**/.jupyter
+**/.local
+**/.npm/*
+
+# Directorios de salida de MLflow
+mlruns/
+.mlflow/
+
+# Archivos de registro
+*.log
+*.out
+*.err
+
+# Archivos temporales
+*.pyc
+*.swp
+*~
