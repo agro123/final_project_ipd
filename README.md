@@ -10,14 +10,10 @@ de la nube como AWS.
 
 - **Jupyter notebook:**
    ```bash
-   docker run -it --name jupyter-all --rm -p 8888:8888 -v "$(pwd)/pip":/pip -v "$(pwd)/notebook":/home/jovyan -v "$(pwd)/data":/home/jovyan/data -v "$(pwd)/model":/home/jovyan/model jupyter/datascience-notebook```
+   docker run -it --name jupyter-all --rm -p 8888:8888 -v "$(pwd)/pip":/pip -v "$(pwd)/notebook":/home/jovyan -v "$(pwd)/data":/home/jovyan/data -v "$(pwd)/model":/home/jovyan/model jupyter/datascience-notebook
 
 
 - **MLFlow:**
-    Construir imagen:
    ```bash
-   docker build -t movie_mlflow .```
-
-   Crear contenedor:
-   ```bash
-    docker run -it --name movies_revenue_mlflow --rm -p 5000:5000 -v "$(pwd)/data":/app/data -v "$(pwd)/model/mlruns":/app/mlruns -v "$(pwd)/model/service.py":/app/service.py -v "$(pwd)/model/model.py":/app/model.py movie_mlflow```
+      docker build -t movie_mlflow .
+      docker run -it --name movies_revenue_mlflow --rm -p 5000:5000 -v "$(pwd)/data":/app/data -v "$(pwd)/model/mlruns":/app/mlruns -v "$(pwd)/model/service.py":/app/service.py -v "$(pwd)/model/model.py":/app/model.py movie_mlflow
