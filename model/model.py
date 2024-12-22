@@ -11,7 +11,7 @@ import mlflow.sklearn
 import os
 import random
 
-from model.pre_process import pre_process
+from pre_process import pre_process
 
 SEED = 42
 np.random.seed(SEED)
