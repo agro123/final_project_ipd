@@ -16,4 +16,4 @@ de la nube como AWS.
 - **MLFlow:**
    ```bash
       docker build -t movie_mlflow .
-      docker run -it --name movies_revenue_mlflow --rm -p 5000:5000 -v "$(pwd)/data":/app/data -v "$(pwd)/model":/app/model movie_mlflow
+      docker run -it --name movies_revenue_mlflow --rm -p 5000:5000 -v "$(pwd)/data":/app/data -v "$(pwd)/model/mlruns":/app/mlruns -v "$(pwd)/model/service.py":/app/service.py -v "$(pwd)/model/model.py":/app/model.py -v "$(pwd)/model/pre_process.py":/app/pre_process.py movie_mlflow
