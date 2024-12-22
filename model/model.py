@@ -11,6 +11,8 @@ import mlflow.sklearn
 import os
 import random
 
+from model.pre_process import pre_process
+
 SEED = 42
 np.random.seed(SEED)
 random.seed(SEED)
@@ -30,38 +32,10 @@ with mlflow.start_run():
     # Combinar tablas
     data = pd.merge(movies, film_details, on='id')
 
-    # Selección y preprocesamiento
-    columns = ['genres', 'language', 'budget_usd', 'revenue_usd', 'vote_count', 'runtime_hour', 'runtime_min', 'director', 'user_score']
-
-    data = data[columns]
-    data = data[columns].dropna()
-
-    # Transformar columnas numéricas
-    data['budget_usd'] = pd.to_numeric(data['budget_usd'], errors='coerce')
-    data['revenue_usd'] = pd.to_numeric(data['revenue_usd'], errors='coerce')
-
-    # Codificación
-    le_language = LabelEncoder()
-    data['language_encoded'] = le_language.fit_transform(data['language'])
-    le_director = LabelEncoder()
-    data['director_encoded'] = le_director.fit_transform(data['director'])
-
-    # Convertir géneros en columnas booleanas
-    available_genders = ['Action', 'Adventure', 'Animation', 'Comedy', 'Crime', 'Drama', 'Family', 'Fantasy', 'History', 'Horror', 'Music', 'Mystery', 'Romance', 'Science Fiction', 'TV Movie', 'Thriller', 'War', 'Western', 'Short']
-    genres_dummies = data['genres'].str.get_dummies(sep=',')
-    # Fusionar columnas duplicadas de generos
-    genres_dummies.columns = genres_dummies.columns.str.strip() #Eliminar espacios
-    genres_dummies = genres_dummies.groupby(genres_dummies.columns, axis=1).any()
-
-    #add missing gender columns
-    missing_columns = set(available_genders) - set(genres_dummies.columns)
-    if missing_columns:
-            genres_dummies = genres_dummies.assign(**{col: False for col in missing_columns})
-
-    data = pd.concat([data, genres_dummies], axis=1).drop(columns=['genres'])
+    data = pre_process(data);
 
     # ======================== 2. División de Datos ========================
-    X = data.drop(columns=['revenue_usd', 'language', 'director'])
+    X = data.drop(columns=['revenue_usd'])
     y = data['revenue_usd']
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)

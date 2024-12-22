@@ -9,6 +9,8 @@ pip/*
 **/.local
 **/.npm/*
 
+data/results/*
+
 # Directorios de salida de MLflow
 mlruns/
 .mlflow/
