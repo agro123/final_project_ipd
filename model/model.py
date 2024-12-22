@@ -32,7 +32,7 @@ with mlflow.start_run():
     # Combinar tablas
     data = pd.merge(movies, film_details, on='id')
 
-    data = pre_process(data);
+    data = pre_process(data, True);
 
     # ======================== 2. División de Datos ========================
     X = data.drop(columns=['revenue_usd'])
