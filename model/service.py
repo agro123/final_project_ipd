@@ -1,12 +1,14 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 import pandas as pd
 import mlflow.sklearn
-from sklearn.preprocessing import LabelEncoder, StandardScaler
-from mlflow.models import validate_serving_input
+import time
+import os
+
+from pre_process import pre_process
 
 app = Flask(__name__)
 
-model_uri = "runs:/movie_revenue_model/random_forest_model"
+model_uri = "runs:/movies_revenue_model/random_forest_model" 
 model = mlflow.sklearn.load_model(model_uri)
 
 @app.route('/predict', methods=['POST'])
@@ -15,55 +17,33 @@ def predict():
         return jsonify({'error': 'No file uploaded'}), 400
 
     file = request.files['file']
+    timestamp = time.time()
     try:
-        rawData = pd.read_csv(file)
-        print('Raw data shape', rawData.shape)
+        raw_data = pd.read_csv(file)
 
         #Validate columns
-        columns = ['genres', 'language', 'budget_usd', 'vote_count', 'runtime_hour', 'runtime_min', 'director', 'user_score']
+        necesary_columns = ['genres', 'language', 'budget_usd', 'vote_count', 'runtime_hour', 'runtime_min', 'director', 'user_score']
 
-        hasAllComuns = all(col in rawData.columns for col in columns)
-        if(not hasAllComuns):
+        is_valid_columns = all(col in raw_data.columns for col in necesary_columns)
+        if(not is_valid_columns):
             raise Exception("Invalid format")
-        #clean values
-        preData = rawData[columns].dropna()
 
-        # Parse into numeric columnns
-        preData['budget_usd'] = pd.to_numeric(preData['budget_usd'], errors='coerce')
+        pp_data = pre_process(raw_data)
 
-        #Codify columns
-        le_language = LabelEncoder()
-        preData['language_encoded'] = le_language.fit_transform(preData['language'])
+        if pp_data.shape[0] == 0:
+            raise Exception("Incomplete data")
 
-        le_director = LabelEncoder()
-        preData['director_encoded'] = le_director.fit_transform(preData['director'])
+        predictions = model.predict(pp_data) 
+        result = raw_data 
+        result['revenue_usd'] = predictions 
+        result['revenue_usd'] = pd.to_numeric(result['revenue_usd'], errors='coerce')
+        # Save the CSV file 
+        result_file_path = f"./data/results/result_{timestamp}.csv" 
+        result.to_csv(result_file_path, index=False)
 
-        #Scale
-        scaler = StandardScaler()
-        preData[['budget_usd', 'vote_count', 'runtime_hour', 'runtime_min']] = scaler.fit_transform(
-            preData[['budget_usd', 'vote_count', 'runtime_hour', 'runtime_min']]
-        )
-
-        availableGenders = ['Action', 'Adventure', 'Animation', 'Comedy', 'Crime', 'Drama', 'Family', 'Fantasy', 'History', 'Horror', 'Music', 'Mystery', 'Romance', 'Science Fiction', 'TV Movie', 'Thriller', 'War', 'Western']
-
-        dataGenders = preData['genres'].str.get_dummies(sep=',')
-        dataGenders.columns = dataGenders.columns.str.strip()
-        dataGenders = dataGenders.groupby(dataGenders.columns, axis=1).any()
-
-        #add missing gender columns
-        missing_columns = set(availableGenders) - set(dataGenders.columns)
-        if missing_columns:
-                dataGenders = dataGenders.assign(**{col: False for col in missing_columns})
-        
-        preData = pd.concat([preData, dataGenders], axis=1).drop(columns=['genres'])
-
-        preData = preData.drop(columns=['language', 'director'])
-
-        predictions = model.predict(preData)
-
-        return jsonify({'predictions': predictions.tolist()})
+        return send_file(result_file_path, as_attachment=True, download_name=f"result_{timestamp}.csv")
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5001, debug=True)

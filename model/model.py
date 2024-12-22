@@ -1,11 +1,9 @@
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.metrics import mean_absolute_error, r2_score, root_mean_squared_error, median_absolute_error, explained_variance_score
 from sklearn.ensemble import RandomForestRegressor
 import matplotlib.pyplot as plt
 import numpy as np
-import seaborn as sns
 import mlflow
 import mlflow.sklearn
 import os
@@ -32,7 +30,7 @@ with mlflow.start_run():
     # Combinar tablas
     data = pd.merge(movies, film_details, on='id')
 
-    data = pre_process(data, True);
+    data = pre_process(data, True)
 
     # ======================== 2. División de Datos ========================
     X = data.drop(columns=['revenue_usd'])
@@ -89,7 +87,7 @@ with mlflow.start_run():
     mlflow.sklearn.log_model(
         sk_model=model,
         artifact_path="movies_revenue_model",
-        registered_model_name="movie_revenue_model",
+        registered_model_name="movies_revenue_model",
         input_example=input_example
     )
 
