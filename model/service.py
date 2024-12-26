@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify, send_file
 import pandas as pd
 import mlflow.sklearn
 import time
-import os
+from joblib import load
 
 from pre_process import pre_process
 
@@ -10,7 +10,7 @@ app = Flask(__name__)
 
 model_uri = "runs:/movies_revenue_model/random_forest_model" 
 model = mlflow.sklearn.load_model(model_uri)
-
+#model = load('movies_revenue_model.joblib')
 @app.route('/predict', methods=['POST'])
 def predict():
     if 'file' not in request.files:

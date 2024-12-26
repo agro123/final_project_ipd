@@ -8,12 +8,11 @@ de la nube como AWS.
 
 **Cómo ejecutar:**
 
-- **Jupyter notebook:**
+- **Build image:**
    ```bash
-   docker run -it --name jupyter-all --rm -p 8888:8888 -v "$(pwd)/pip":/pip -v "$(pwd)/notebook":/home/jovyan -v "$(pwd)/data":/home/jovyan/data -v "$(pwd)/model":/home/jovyan/model jupyter/datascience-notebook
+   docker build -t movies_revenue .
 
 
-- **MLFlow:**
+- **Run container:**
    ```bash
-      docker build -t movie_mlflow .
-      docker run -it --name movies_revenue_mlflow --rm -p 5000:5000 -v "$(pwd)/data":/app/data -v "$(pwd)/model/mlruns":/app/mlruns -v "$(pwd)/model/service.py":/app/service.py -v "$(pwd)/model/model.py":/app/model.py -v "$(pwd)/model/pre_process.py":/app/pre_process.py movie_mlflow
+      docker run -it --name mr_c --rm -p 5000:5000 -p 5001:5001 -p 8888:8888 -v "$(pwd)/pip":/pip  -v "$(pwd)/data":/app/data -v "$(pwd)/model":/app/model -v "$(pwd)/notebook":/app/ -v "$(pwd)/models":/app/models movies_revenue

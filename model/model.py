@@ -10,12 +10,16 @@ import os
 import random
 
 from pre_process import pre_process
+from joblib import dump
 
 SEED = 42
 np.random.seed(SEED)
 random.seed(SEED)
 os.environ['PYTHONHASHSEED'] = str(SEED)
 
+version = f"V{os.environ['VERSION']}"
+
+print(version)
 print(pd.__version__)
 print(np.__version__)
 
@@ -56,7 +60,6 @@ with mlflow.start_run():
 
     mlflow.log_metric("MAE", mae)
     mlflow.log_metric("R2", r2)
-    mlflow.log_metric("RMSE", rmse)#Indica el error promedio cuadrático. Es útil porque penaliza errores grandes más que el MAE.
     mlflow.log_metric("Mediana_EA", medae) #Ayuda a reducir el impacto de valores atípicos (outliers).
     mlflow.log_metric("Explained_Variance", explained_var)
 
@@ -91,6 +94,6 @@ with mlflow.start_run():
         input_example=input_example
     )
 
-    print("Modelo y artefactos registrados en MLflow")
+    dump(model, f'./movies_revenue_model_{version}.joblib')
 
-#os.system("mlflow ui --host 0.0.0.0 --port 5000")
+    print("Modelo y artefactos registrados en MLflow")
