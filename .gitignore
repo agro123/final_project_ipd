@@ -3,6 +3,7 @@ model/.ipynb_checkpoints
 *.png
 pip/*
 *.joblib
+model/temp/*
 
 **/.cache
 **/.config
