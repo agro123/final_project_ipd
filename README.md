@@ -16,3 +16,7 @@ de la nube como AWS.
 - **Run container:**
    ```bash
       docker run -it --name mr_c --rm -p 5000:5000 -p 5001:5001 -p 8888:8888 -v "$(pwd)/pip":/pip  -v "$(pwd)/data":/app/data -v "$(pwd)/model":/app/model -v "$(pwd)/notebook":/app/ -v "$(pwd)/models":/app/models movies_revenue
+
+- **Run model.py**
+   ```bash
+      docker exec mr_c python /app/model/model.py

@@ -6,30 +6,35 @@ import matplotlib.pyplot as plt
 import numpy as np
 import mlflow
 import mlflow.sklearn
+from joblib import dump
+
 import os
 import random
+import sys
 
 from pre_process import pre_process
-from joblib import dump
 
 SEED = 42
 np.random.seed(SEED)
 random.seed(SEED)
 os.environ['PYTHONHASHSEED'] = str(SEED)
 
-version = f"V{os.environ['VERSION']}"
+VERSION = "v1"
 
-print(version)
-print(pd.__version__)
-print(np.__version__)
+print(f"Training model version: {VERSION}")
+
+debug = True
+
+if len(sys.argv) == 2:
+    debug = bool(sys.argv[1])
 
 # Configuración del experimento MLflow
 mlflow.set_experiment("movies_revenue_prediction")
 
 with mlflow.start_run():
     # ======================== 1. Carga y limpieza de Datos ========================
-    movies = pd.read_csv('/app/data/train_data/Movies.csv')
-    film_details = pd.read_csv('/app/data/train_data/FilmDetails.csv')
+    movies = pd.read_csv(f'/app/data/train_data/{VERSION}/Movies.csv')
+    film_details = pd.read_csv(f'/app/data/train_data/{VERSION}/FilmDetails.csv')
 
     # Combinar tablas
     data = pd.merge(movies, film_details, on='id')
@@ -89,11 +94,15 @@ with mlflow.start_run():
 
     mlflow.sklearn.log_model(
         sk_model=model,
-        artifact_path="movies_revenue_model",
-        registered_model_name="movies_revenue_model",
+        artifact_path=f"movies_revenue_prediction_{VERSION}",
+        registered_model_name=f"revenue_prediction_{VERSION}",
         input_example=input_example
     )
 
-    dump(model, f'./movies_revenue_model_{version}.joblib')
+    os.system('sh -c mlflow server --host 0.0.0.0 --port 5000 --artifacts-destination s3://final-project-ipd-2024')
 
-    print("Modelo y artefactos registrados en MLflow")
+    dump(model, f'../models/revenue_prediction_{VERSION}.joblib')
+
+    print(f"Model {VERSION} & artifacts registered on MLflow")
+
+#os.system('mlflow ui --host 0.0.0.0 --port 5000')

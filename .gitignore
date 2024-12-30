@@ -1,6 +1,8 @@
 model/.trash/*
 model/.ipynb_checkpoints
+*.png
 pip/*
+*.joblib
 
 **/.cache
 **/.config
