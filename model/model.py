@@ -6,52 +6,41 @@ import matplotlib.pyplot as plt
 import numpy as np
 import mlflow
 import mlflow.sklearn
+from joblib import dump
+
 import os
 import random
-import sys
-import boto3
-from joblib import dump
+import tempfile
+
 from pre_process import pre_process
+from s3_helpers import download_from_s3, upload_to_s3
 
 SEED = 42
 np.random.seed(SEED)
 random.seed(SEED)
 os.environ['PYTHONHASHSEED'] = str(SEED)
 
-VERSION = 'v1'
+VERSION = os.getenv("MODEL_VERSION", "v1")
 
 print(f"Training model version: {VERSION}")
 
 # Configuración del experimento MLflow
-#mlflow.set_tracking_uri("http://127.0.0.1:5000")
+mlflow.set_tracking_uri("http://127.0.0.1:5000")
 mlflow.set_experiment("movies_revenue_prediction")
-
-# Configura cliente S3
-s3 = boto3.client('s3')
-BUCKET_NAME = "final-project-ipd-2024"
-
-# Función para descargar archivos desde S3
-def download_from_s3(key, local_path):
-    s3.download_file(BUCKET_NAME, key, local_path)
-
-# Función para subir archivos a S3
-def upload_to_s3(key, local_path):
-    s3.upload_file(local_path, BUCKET_NAME, key)
 
 with mlflow.start_run():
     # ======================== 1. Carga y limpieza de Datos ========================
     movies_key = f'train_data/{VERSION}/Movies.csv'
+    #local_movies_path = f'./temp/Movies_{VERSION}.csv'
+    with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp_movies:
+        download_from_s3(movies_key, tmp_movies.name)
+        movies = pd.read_csv(tmp_movies.name)
+
     film_details_key = f'train_data/{VERSION}/FilmDetails.csv'
-    local_movies_path = f'./temp/Movies_{VERSION}.csv'
-    local_film_details_path = f'./temp/FilmDetails_{VERSION}.csv'
-
-    # Descargar los archivos desde S3
-    download_from_s3(movies_key, local_movies_path)
-    download_from_s3(film_details_key, local_film_details_path)
-
-    # Leer los archivos CSV
-    movies = pd.read_csv(local_movies_path)
-    film_details = pd.read_csv(local_film_details_path)
+    #local_film_details_path = f'./temp/FilmDetails_{VERSION}.csv'
+    with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp_film_details:
+        download_from_s3(film_details_key, tmp_film_details.name)
+        film_details = pd.read_csv(tmp_film_details.name)
 
     # Combinar tablas
     data = pd.merge(movies, film_details, on='id')
@@ -111,13 +100,18 @@ with mlflow.start_run():
         input_example=input_example
     )
 
-    # Guardar el modelo localmente
-    local_model_path = f'./temp/revenue_prediction_{VERSION}.joblib'
-    dump(model, local_model_path)
-
-    # Subir el modelo a S3
     model_key = f'models/revenue_prediction_{VERSION}.joblib'
-    upload_to_s3(model_key, local_model_path)
+    #local_model_path = f'./temp/revenue_prediction_{VERSION}.joblib'
+    with tempfile.NamedTemporaryFile(suffix=".joblib", delete=False) as tmp_model:
+        dump(model, tmp_model.name)
+        upload_to_s3(model_key, tmp_model.name)
+
+    if os.path.exists(tmp_model.name):
+        os.remove(tmp_model.name)
+    if os.path.exists(tmp_movies.name):
+        os.remove(tmp_movies.name)
+    if os.path.exists(tmp_film_details.name):
+        os.remove(tmp_film_details.name)
 
     print(f"Modelo {VERSION} y artefactos registrados en MLflow y S3")
 
