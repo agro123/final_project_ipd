@@ -7,6 +7,7 @@ import numpy as np
 import mlflow
 import mlflow.sklearn
 from joblib import dump
+from urllib.parse import urlparse
 
 import os
 import random
@@ -21,11 +22,12 @@ random.seed(SEED)
 os.environ['PYTHONHASHSEED'] = str(SEED)
 
 VERSION = os.getenv("MODEL_VERSION", "v1")
+MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI")
 
 print(f"Training model version: {VERSION}")
 
 # Configuración del experimento MLflow
-mlflow.set_tracking_uri("http://127.0.0.1:5000")
+mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
 mlflow.set_experiment("movies_revenue_prediction")
 
 with mlflow.start_run():
@@ -71,6 +73,11 @@ with mlflow.start_run():
     mlflow.log_metric("Mediana_EA", medae)
     mlflow.log_metric("Explained_Variance", explained_var)
 
+    print("MAE: ", mae)
+    print("R2: ", r2)
+    print("Mediana_EA: ", medae)
+    print("Explained_Variance: ", explained_var)
+
     # ======================== 4. Visualización y Artefactos ========================
     # Gráfico: Predicción vs Real
     plt.figure(figsize=(10, 5))
@@ -93,13 +100,24 @@ with mlflow.start_run():
     # ======================== 5. Registro del Modelo ========================
     input_example = X_train.iloc[0].to_dict()
 
-    mlflow.sklearn.log_model(
-        sk_model=model,
-        artifact_path=f"movies_revenue_prediction_{VERSION}",
-        #registered_model_name=f"revenue_prediction_{VERSION}",
-        input_example=input_example
-    )
+    tracking_url_type_store = urlparse(mlflow.get_tracking_uri()).scheme
 
+    if tracking_url_type_store != "file":
+
+        mlflow.sklearn.log_model(
+            sk_model=model,
+            artifact_path=f"movies_revenue_prediction_{VERSION}",
+            registered_model_name=f"revenue_prediction_{VERSION}",
+            input_example=input_example
+        )
+    else:
+        mlflow.sklearn.log_model(
+            sk_model=model,
+            artifact_path=f"movies_revenue_prediction_{VERSION}",
+            input_example=input_example
+        )
+
+    print('Guardando model en .joblib')
     model_key = f'models/revenue_prediction_{VERSION}.joblib'
     #local_model_path = f'./temp/revenue_prediction_{VERSION}.joblib'
     with tempfile.NamedTemporaryFile(suffix=".joblib", delete=False) as tmp_model:
@@ -115,5 +133,5 @@ with mlflow.start_run():
 
     print(f"Modelo {VERSION} y artefactos registrados en MLflow y S3")
 
-#os.system('mlflow ui --host 0.0.0.0 --port 5000')
-#os.system('mlflow server -h 0.0.0.0 --default-artifact-root s3://final-project-ipd-2024')
+#os.system('mlflow ui --host 0.0.0.0 --port 5000') #local
+#os.system('mlflow server -h 0.0.0.0 --default-artifact-root s3://final-project-ipd-2024') #server
