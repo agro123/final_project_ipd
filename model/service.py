@@ -27,6 +27,7 @@ def predict():
 
     file = request.files['file']
     timestamp = time.time()
+    result_file_path = ''
     try:
         #Download model from S3
         model_key = f'models/revenue_prediction_{VERSION}.joblib'
@@ -60,7 +61,6 @@ def predict():
         with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp_result:
             result_file_path = tmp_result.name
             result.to_csv(result_file_path, index=False)  
-
             result_key = f'results/{file_name}'
             upload_to_s3(result_key, result_file_path)
 

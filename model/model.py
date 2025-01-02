@@ -26,7 +26,7 @@ load_dotenv()
 
 VERSION = os.getenv("MODEL_VERSION")
 MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI")
-SAVE_JOBLIB = False
+SAVE_JOBLIB = os.getenv("SAVE_JOBLIB", "False") == "True"
 
 print(f"Training model version: {VERSION}")
 
