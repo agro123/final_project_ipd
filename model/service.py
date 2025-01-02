@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, send_file
 import pandas as pd
 import mlflow.sklearn
 from joblib import load
+from dotenv import load_dotenv
 
 import tempfile
 import logging
@@ -11,9 +12,11 @@ import os
 from pre_process import pre_process
 from s3_helpers import download_from_s3, upload_to_s3
 
+load_dotenv()
+
 app = Flask(__name__)
 
-VERSION = os.getenv("MODEL_VERSION", "v1")
+VERSION = os.getenv("MODEL_VERSION")
 
 print('---------------->', VERSION)
 

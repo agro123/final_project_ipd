@@ -8,6 +8,7 @@ import mlflow
 import mlflow.sklearn
 from joblib import dump
 from urllib.parse import urlparse
+from dotenv import load_dotenv
 
 import os
 import random
@@ -21,8 +22,11 @@ np.random.seed(SEED)
 random.seed(SEED)
 os.environ['PYTHONHASHSEED'] = str(SEED)
 
-VERSION = os.getenv("MODEL_VERSION", "v1")
+load_dotenv()
+
+VERSION = os.getenv("MODEL_VERSION")
 MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI")
+SAVE_JOBLIB = False
 
 print(f"Training model version: {VERSION}")
 
@@ -117,12 +121,13 @@ with mlflow.start_run():
             input_example=input_example
         )
 
-    print('Guardando model en .joblib')
+    print('Guardando modelo en formato .joblib')
     model_key = f'models/revenue_prediction_{VERSION}.joblib'
     #local_model_path = f'./temp/revenue_prediction_{VERSION}.joblib'
     with tempfile.NamedTemporaryFile(suffix=".joblib", delete=False) as tmp_model:
-        dump(model, tmp_model.name)
-        upload_to_s3(model_key, tmp_model.name)
+        if SAVE_JOBLIB:
+            dump(model, tmp_model.name)
+            upload_to_s3(model_key, tmp_model.name)
 
     if os.path.exists(tmp_model.name):
         os.remove(tmp_model.name)
@@ -134,4 +139,4 @@ with mlflow.start_run():
     print(f"Modelo {VERSION} y artefactos registrados en MLflow y S3")
 
 #os.system('mlflow ui --host 0.0.0.0 --port 5000') #local
-#os.system('mlflow server -h 0.0.0.0 --default-artifact-root s3://final-project-ipd-2024') #server
+#os.system('mlflow server -h 0.0.0.0 --default-artifact-root s3://final-project-ipd-2024/mlflow_artifacts') #server
